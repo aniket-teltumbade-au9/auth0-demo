@@ -25,6 +25,11 @@ function getPrimaryConnection(sub: string) {
     return sub.split("|")[0] ?? "auth0";
 }
 
+function normalizeConnection(value: string) {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "x" ? "twitter" : normalized;
+}
+
 function getSafeName(user: SessionUser) {
     return user.name || user.nickname || user.email || "Auth0 Demo User";
 }
@@ -34,15 +39,17 @@ function buildConnections(
     existingConnections: string[] = [],
     options?: SyncUserOptions
 ) {
-    const connectionSet = new Set(existingConnections.filter(Boolean));
+    const connectionSet = new Set(
+        existingConnections.filter(Boolean).map(normalizeConnection)
+    );
 
-    connectionSet.add(getPrimaryConnection(user.sub));
+    connectionSet.add(normalizeConnection(getPrimaryConnection(user.sub)));
 
     const linkedConnection =
         options?.connectedAccount?.connection || options?.connectedAccount?.provider;
 
     if (linkedConnection) {
-        connectionSet.add(linkedConnection);
+        connectionSet.add(normalizeConnection(linkedConnection));
     }
 
     return Array.from(connectionSet).sort();

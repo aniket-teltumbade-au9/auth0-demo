@@ -14,6 +14,11 @@ export default auth0.withPageAuthRequired(
         }
 
         const profile = await getUserProfile(session.user.sub);
+        const primaryConnection =
+            profile?.primaryConnection || session.user.sub.split("|")[0] || "auth0";
+        const mergedConnections = Array.from(
+            new Set([...(profile?.connectedConnections || []), primaryConnection])
+        );
 
         return (
             <section className="section-shell py-16 md:py-20">
@@ -35,7 +40,10 @@ export default auth0.withPageAuthRequired(
                     />
 
                     <div className="space-y-6">
-                        <ConnectedAccountsCard connections={profile?.connectedConnections || []} />
+                        <ConnectedAccountsCard
+                            connections={mergedConnections}
+                            primaryConnection={primaryConnection}
+                        />
                         <div className="glass-panel p-6">
                             <div className="flex items-start gap-4">
                                 <div className="rounded-2xl bg-violet-500/15 p-3 text-violet-200">

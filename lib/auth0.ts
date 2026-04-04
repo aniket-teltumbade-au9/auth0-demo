@@ -81,7 +81,8 @@ export const auth0 = new Auth0Client({
                 "openid profile email offline_access create:me:connected_accounts identities:read identities:manage"
         }
         : {
-            scope: "openid profile email offline_access"
+            scope:
+                "openid profile email offline_access create:me:connected_accounts identities:read identities:manage"
         },
     async beforeSessionSaved(session) {
         return {

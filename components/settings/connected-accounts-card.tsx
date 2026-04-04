@@ -4,6 +4,7 @@ import { formatConnectionName } from "@/lib/utils";
 
 type ConnectedAccountsCardProps = {
     connections: string[];
+    primaryConnection: string;
 };
 
 const providers = [
@@ -16,11 +17,23 @@ const providers = [
         id: "facebook",
         label: "Facebook",
         href: "/auth/connect?connection=facebook&returnTo=/settings"
+    },
+    {
+        id: "twitter",
+        label: "Twitter / X",
+        href: "/auth/connect?connection=twitter&returnTo=/settings"
     }
 ];
 
-export function ConnectedAccountsCard({ connections }: ConnectedAccountsCardProps) {
-    const connectedSet = new Set(connections);
+export function ConnectedAccountsCard({
+    connections,
+    primaryConnection
+}: ConnectedAccountsCardProps) {
+    const connectedSet = new Set(
+        [...connections, primaryConnection]
+            .filter(Boolean)
+            .map((connection) => connection.toLowerCase())
+    );
 
     return (
         <div className="glass-panel p-6">
@@ -39,7 +52,14 @@ export function ConnectedAccountsCard({ connections }: ConnectedAccountsCardProp
 
             <div className="mt-8 space-y-4">
                 {providers.map((provider) => {
-                    const isConnected = connectedSet.has(provider.id);
+                    const normalizedId = provider.id.toLowerCase();
+                    const isConnected =
+                        connectedSet.has(normalizedId) ||
+                        (normalizedId === "twitter" && connectedSet.has("x"));
+                    const isPrimary =
+                        primaryConnection.toLowerCase() === normalizedId ||
+                        (normalizedId === "twitter" && primaryConnection.toLowerCase() === "x");
+
                     return (
                         <div
                             key={provider.id}
@@ -48,13 +68,18 @@ export function ConnectedAccountsCard({ connections }: ConnectedAccountsCardProp
                             <div>
                                 <p className="font-semibold text-white">{provider.label}</p>
                                 <p className="mt-1 text-sm text-slate-400">
-                                    {provider.label}: {isConnected ? "Connected" : "Not linked"}
+                                    {provider.label}:{" "}
+                                    {isPrimary
+                                        ? "Connected (current login provider)"
+                                        : isConnected
+                                            ? "Connected"
+                                            : "Not linked"}
                                 </p>
                             </div>
                             {isConnected ? (
                                 <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-300">
                                     <ShieldCheck className="h-4 w-4" />
-                                    Connected
+                                    {isPrimary ? "Current" : "Connected"}
                                 </span>
                             ) : (
                                 <a
@@ -71,6 +96,9 @@ export function ConnectedAccountsCard({ connections }: ConnectedAccountsCardProp
 
             <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-slate-400">
                 Current connections in MongoDB: <span className="text-white">{connections.map(formatConnectionName).join(", ") || "None recorded yet"}</span>
+                <p className="mt-2">
+                    Current sign-in provider: <span className="text-white">{formatConnectionName(primaryConnection)}</span>
+                </p>
                 <p className="mt-2">
                     For production linking, enable the Auth0 connected accounts feature and allow Offline Access on the social connection permissions.
                 </p>

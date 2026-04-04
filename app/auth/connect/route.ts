@@ -15,9 +15,17 @@ export async function GET(req: NextRequest) {
     const loginUrl = new URL("/auth/login", process.env.APP_BASE_URL ?? "http://localhost:3000");
     loginUrl.searchParams.set("connection", connection);
     loginUrl.searchParams.set("prompt", "login");
-    loginUrl.searchParams.set("returnTo", returnTo);
-    // pass primary sub to Auth0 so Action can access it
+    loginUrl.searchParams.set("returnTo", `/auth/link-callback?returnTo=${encodeURIComponent(returnTo)}`);
     loginUrl.searchParams.set("linking_primary_sub", session.user.sub);
 
-    return NextResponse.redirect(loginUrl);
+    // store primary sub in cookie as backup
+    const response = NextResponse.redirect(loginUrl);
+    response.cookies.set("linking_primary_sub", session.user.sub, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 5
+    });
+
+    return response;
 }

@@ -9,6 +9,8 @@ export function formatConnectionName(connection: string) {
     const labels: Record<string, string> = {
         "google-oauth2": "Google",
         facebook: "Facebook",
+        twitter: "Twitter / X",
+        x: "Twitter / X",
         sms: "SMS Passwordless",
         email: "Email Passwordless",
         auth0: "Database"
