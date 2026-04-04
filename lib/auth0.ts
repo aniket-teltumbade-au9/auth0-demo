@@ -1,0 +1,131 @@
+import { Auth0Client } from "@auth0/nextjs-auth0/server";
+import { NextResponse } from "next/server";
+
+type CallbackContextWithConnectedAccount = {
+    appBaseUrl?: string;
+    returnTo?: string;
+    connectedAccount?: {
+        connection?: string | null;
+        provider?: string | null;
+    } | null;
+};
+
+const myAccountAudience = undefined;
+//  auth0Domain ? `https://${auth0Domain}/me/` : undefined;
+
+const useDPoP = Boolean(
+    process.env.AUTH0_DPOP_PUBLIC_KEY && process.env.AUTH0_DPOP_PRIVATE_KEY
+);
+
+const configuredBaseUrl = getConfiguredBaseUrl();
+const primaryBaseUrl = Array.isArray(configuredBaseUrl)
+    ? configuredBaseUrl[0]
+    : configuredBaseUrl;
+
+function getConfiguredBaseUrl() {
+    const baseUrl = process.env.APP_BASE_URL ?? "http://localhost:3000"; // ← fallback
+
+    const values = baseUrl
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean);
+
+    if (values.length <= 1) {
+        return values[0];
+    }
+
+    return values;
+}
+
+function getAuthErrorMessage(error: unknown) {
+    if (!error || typeof error !== "object") {
+        return "An error occurred during the authorization flow.";
+    }
+
+    const candidate = error as {
+        message?: string;
+        cause?: {
+            message?: string;
+            error?: string;
+            error_description?: string;
+        };
+    };
+
+    return (
+        candidate.cause?.error_description ||
+        candidate.cause?.message ||
+        candidate.message ||
+        "An error occurred during the authorization flow."
+    );
+}
+
+export const auth0 = new Auth0Client({
+    appBaseUrl: configuredBaseUrl,
+    useDPoP,
+    enableConnectAccountEndpoint: false,
+    signInReturnToPath: "/auth-demo",
+    session: {
+        rolling: true,
+        absoluteDuration: 60 * 60 * 24 * 7,
+        inactivityDuration: 60 * 60 * 24,
+        cookie: {
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax"
+        }
+    },
+    authorizationParameters: myAccountAudience
+        ? {
+            // Needed for connected account flows and My Account operations.
+            audience: myAccountAudience,
+            scope:
+                "openid profile email offline_access create:me:connected_accounts identities:read identities:manage"
+        }
+        : {
+            scope: "openid profile email offline_access"
+        },
+    async beforeSessionSaved(session) {
+        return {
+            ...session,
+            user: {
+                sub: session.user.sub,
+                name: session.user.name,
+                nickname: session.user.nickname,
+                given_name: session.user.given_name,
+                family_name: session.user.family_name,
+                picture: session.user.picture,
+                email: session.user.email,
+                email_verified: session.user.email_verified,
+                org_id: session.user.org_id
+            }
+        };
+    },
+    async onCallback(error, context, session) {
+        const callbackContext = context as CallbackContextWithConnectedAccount;
+        const appBaseUrl =
+            callbackContext.appBaseUrl ?? primaryBaseUrl ?? "http://localhost:3000";
+
+        if (error) {
+            const url = new URL("/auth-error", appBaseUrl);
+            url.searchParams.set("message", getAuthErrorMessage(error));
+            return NextResponse.redirect(url);
+        }
+
+        if (session?.user) {
+            try {
+                // Dynamic import keeps Mongoose out of the Edge Runtime bundle;
+                // onCallback only runs in the Node.js /auth/callback route handler.
+                const { syncUserProfile } = await import("@/lib/user-sync");
+                await syncUserProfile(session.user, {
+                    connectedAccount: callbackContext.connectedAccount ?? undefined
+                });
+            } catch (syncError) {
+                // Never block login because of profile persistence failures.
+                console.error("Profile sync failed during callback", syncError);
+            }
+        }
+
+        return NextResponse.redirect(
+            new URL(callbackContext.returnTo ?? "/auth-demo", appBaseUrl)
+        );
+    }
+});
