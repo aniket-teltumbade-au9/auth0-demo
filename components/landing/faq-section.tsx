@@ -40,7 +40,7 @@ export function FAQSection() {
                 <p className="text-sm uppercase tracking-[0.28em] text-cyan-300">FAQ</p>
                 <h2 className="section-title">Common questions before we start</h2>
                 <p className="section-copy">
-                    Have a question not listed here? Reach out via Upwork or Freelancer and I'll respond within 24 hours.
+                    Have a question not listed here? Reach out via Upwork or Freelancer and I&apos;ll respond within 24 hours.
                 </p>
             </div>
 

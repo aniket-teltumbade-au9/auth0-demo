@@ -92,7 +92,7 @@ export const auth0 = new Auth0Client({
             }
         };
     },
-    async onCallback(error, context, session) {
+    async onCallback(error, context, _session) {
         const callbackContext = context as CallbackContextWithConnectedAccount;
         const appBaseUrl =
             callbackContext.appBaseUrl ?? primaryBaseUrl ?? "http://localhost:3000";

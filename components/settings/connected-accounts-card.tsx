@@ -92,7 +92,7 @@ export function ConnectedAccountsCard({
                     <p className="text-sm uppercase tracking-[0.28em] text-slate-500">Account linking</p>
                     <h2 className="mt-2 text-2xl font-semibold text-white">Connected accounts</h2>
                     <p className="mt-3 text-sm leading-7 text-slate-400">
-                        Powered by Auth0's connected accounts flow. Linking routes return to this page after the provider handshake completes.
+                        Powered by Auth0&apos;s connected accounts flow. Linking routes return to this page after the provider handshake completes.
                     </p>
                 </div>
                 <div className="rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">
