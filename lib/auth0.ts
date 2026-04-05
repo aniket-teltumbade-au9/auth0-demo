@@ -113,7 +113,7 @@ export const auth0 = new Auth0Client({
         //   • app/auth/link-callback/route.ts  (Route Handler)
 
         return NextResponse.redirect(
-            new URL(callbackContext.returnTo ?? "/auth-demo", appBaseUrl)
+            new URL(callbackContext.returnTo ?? "/settings", appBaseUrl)
         );
     }
 });

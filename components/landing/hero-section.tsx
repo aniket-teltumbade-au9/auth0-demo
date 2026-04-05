@@ -31,7 +31,7 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
 
                     <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                         <a
-                            href={isAuthenticated ? "/auth-demo" : "/login"}
+                            href={isAuthenticated ? "/settings" : "/login"}
                             className="inline-flex items-center justify-center gap-2 rounded-full bg-violet-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-400"
                         >
                             Explore live Auth demo

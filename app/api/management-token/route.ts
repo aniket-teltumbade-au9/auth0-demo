@@ -15,7 +15,13 @@ import { auth0 } from "@/lib/auth0";
  *  AUTH0_M2M_CLIENT_SECRET   — M2M app client_secret
  *  AUTH0_MGMT_AUDIENCE       — https://<domain>/api/v2/
  */
-export const GET = auth0.withApiAuthRequired(async function getManagementToken() {
+export async function GET(_req: Request): Promise<Response> {
+    const session = await auth0.getSession();
+
+    if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const domain = process.env.AUTH0_DOMAIN;
     const clientId = process.env.AUTH0_M2M_CLIENT_ID;
     const clientSecret = process.env.AUTH0_M2M_CLIENT_SECRET;
@@ -58,4 +64,4 @@ export const GET = auth0.withApiAuthRequired(async function getManagementToken()
         expires_in: data.expires_in,
         token_type: data.token_type,
     });
-});
+}

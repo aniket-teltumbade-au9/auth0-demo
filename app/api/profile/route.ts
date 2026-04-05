@@ -31,7 +31,7 @@ function validatePayload(payload: unknown) {
     };
 }
 
-export const GET = auth0.withApiAuthRequired(async function getProfile(_req: Request) {
+export async function GET(_req: Request): Promise<Response> {
     const session = await auth0.getSession();
 
     if (!session) {
@@ -42,9 +42,9 @@ export const GET = auth0.withApiAuthRequired(async function getProfile(_req: Req
         (await getUserProfile(session.user.sub)) || (await syncUserProfile(session.user));
 
     return NextResponse.json({ profile });
-});
+}
 
-export const PATCH = auth0.withApiAuthRequired(async function patchProfile(req: Request) {
+export async function PATCH(req: Request): Promise<Response> {
     const session = await auth0.getSession();
 
     if (!session) {
@@ -72,4 +72,4 @@ export const PATCH = auth0.withApiAuthRequired(async function patchProfile(req: 
             { status: 400 }
         );
     }
-});
+}

@@ -30,15 +30,15 @@ export default function AuthCallbackPopupPage() {
                     } catch {
                         // In some browsers window.close() is blocked if the window
                         // wasn't opened by script — fall back to redirecting.
-                        router.replace("/auth-demo");
+                        router.replace("/settings");
                     }
                 }, 300);
             } else {
                 // Not running inside a popup — navigate directly
-                router.replace("/auth-demo");
+                router.replace("/settings");
             }
         } catch {
-            router.replace("/auth-demo");
+            router.replace("/settings");
         }
     }, [router]);
 

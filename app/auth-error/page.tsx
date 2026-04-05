@@ -28,7 +28,7 @@ export default async function AuthErrorPage({ searchParams }: AuthErrorPageProps
                         Back to home
                     </Link>
                     <a
-                        href="/login?returnTo=/auth-demo"
+                        href="/login?returnTo=/settings"
                         className="inline-flex items-center justify-center rounded-2xl bg-violet-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-400"
                     >
                         Try login again

@@ -125,7 +125,7 @@ function useAuthPopup(returnTo: string) {
                 if (e.origin !== window.location.origin) return;
                 if (e.data?.type === "auth0_popup_complete") {
                     cleanup();
-                    window.location.assign(returnTo || "/auth-demo");
+                    window.location.assign(returnTo || "/settings");
                 }
             }
 
@@ -150,7 +150,7 @@ function useAuthPopup(returnTo: string) {
 /* ─── Page ────────────────────────────────────────────────────────── */
 export default function SignupPage() {
     const searchParams = useSearchParams();
-    const returnTo = searchParams.get("returnTo") ?? "/auth-demo";
+    const returnTo = searchParams.get("returnTo") ?? "/settings";
 
     const { loading: popupLoading, open: openPopup } = useAuthPopup(returnTo);
 

@@ -17,8 +17,8 @@ export function PasswordlessPanel() {
     const [email, setEmail] = useState("demo@client.com");
     const [phone, setPhone] = useState("+15551234567");
 
-    const emailHref = useMemo(() => createLoginHref("email", email, "/auth-demo"), [email]);
-    const phoneHref = useMemo(() => createLoginHref("sms", phone, "/auth-demo"), [phone]);
+    const emailHref = useMemo(() => createLoginHref("email", email, "/settings"), [email]);
+    const phoneHref = useMemo(() => createLoginHref("sms", phone, "/settings"), [phone]);
 
     return (
         <div className="grid gap-6 lg:grid-cols-2">

@@ -19,27 +19,28 @@ import { getAuth0User } from "@/lib/management";
  *  4. Syncs the linked connection to MongoDB.
  *  5. Redirects to returnTo (usually /settings).
  */
-export const GET = auth0.withApiAuthRequired(async function linkCallback(
-    req: Request
-) {
-    const request = req as unknown as NextRequest;
-    const { searchParams } = new URL(request.url);
+export async function GET(req: NextRequest): Promise<Response> {
+    const session = await auth0.getSession();
+
+    if (!session?.user) {
+        return NextResponse.redirect(
+            new URL("/", process.env.APP_BASE_URL ?? "http://localhost:3000")
+        );
+    }
+
+    const { searchParams } = new URL(req.url);
     const returnTo = searchParams.get("returnTo") ?? "/settings";
     const appBaseUrl = process.env.APP_BASE_URL ?? "http://localhost:3000";
-
-    const session = await auth0.getSession();
 
     const response = NextResponse.redirect(new URL(returnTo, appBaseUrl));
     // Always clear the cookie regardless of outcome
     response.cookies.delete("linking_primary_sub");
 
-    if (!session?.user) return response;
-
     // Prefer the ID token claim set by the Auth0 Action (most reliable).
     // Fall back to the httpOnly cookie set by /auth/connect.
     const primarySub =
         (session.user.linking_primary_sub as string | undefined) ||
-        request.cookies.get("linking_primary_sub")?.value;
+        req.cookies.get("linking_primary_sub")?.value;
 
     // Nothing to restore — user logged in with their existing account
     if (!primarySub || primarySub === session.user.sub) return response;
@@ -96,4 +97,4 @@ export const GET = auth0.withApiAuthRequired(async function linkCallback(
     }
 
     return response;
-});
+}

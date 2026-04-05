@@ -37,14 +37,14 @@ export default auth0.withPageAuthRequired(
 
                         <div className="mt-8 grid gap-4">
                             <a
-                                href="/auth/login?connection=google-oauth2&returnTo=/auth-demo"
+                                href="/auth/login?connection=google-oauth2&returnTo=/settings"
                                 className="inline-flex items-center justify-between rounded-2xl border border-white/10 bg-white px-4 py-4 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
                             >
                                 Continue with Google
                                 <BadgeCheck className="h-4 w-4" />
                             </a>
                             <a
-                                href="/auth/login?connection=facebook&returnTo=/auth-demo"
+                                href="/auth/login?connection=facebook&returnTo=/settings"
                                 className="inline-flex items-center justify-between rounded-2xl border border-white/10 px-4 py-4 text-sm font-semibold text-white transition hover:border-cyan-300/60 hover:bg-white/5"
                             >
                                 Continue with Facebook
@@ -110,5 +110,5 @@ export default auth0.withPageAuthRequired(
             </section>
         );
     },
-    { returnTo: "/auth-demo" }
+    { returnTo: "/settings" }
 );

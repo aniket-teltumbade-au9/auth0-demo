@@ -26,7 +26,7 @@ export function SiteHeader({ isAuthenticated, userName }: SiteHeaderProps) {
 
                 <nav className="hidden items-center gap-8 text-sm text-slate-300 lg:flex">
                     <Link href="/">Home</Link>
-                    <Link href="/auth-demo">Live Demo</Link>
+                    <Link href="/settings">Live Demo</Link>
                     <Link href="/#integrations">Integrations</Link>
                     <Link href="/#pricing">Pricing</Link>
                     <Link href="/#faq">FAQ</Link>
