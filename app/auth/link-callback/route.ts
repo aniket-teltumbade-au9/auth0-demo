@@ -1,34 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { auth0 } from "@/lib/auth0";
+import { getAuth0User } from "@/lib/management";
 
-async function getManagementToken(): Promise<string> {
-    const res = await fetch(`https://${process.env.AUTH0_DOMAIN}/oauth/token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            grant_type: "client_credentials",
-            client_id: process.env.AUTH0_CLIENT_ID,
-            client_secret: process.env.AUTH0_CLIENT_SECRET,
-            audience: `https://${process.env.AUTH0_DOMAIN}/api/v2/`
-        })
-    });
-    if (!res.ok) throw new Error(`Management token failed: ${res.status}`);
-    const { access_token } = await res.json();
-    return access_token;
-}
-
-async function getPrimaryUser(primarySub: string) {
-    const token = await getManagementToken();
-    const res = await fetch(
-        `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${encodeURIComponent(primarySub)}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!res.ok) throw new Error(`Management user fetch failed: ${res.status}`);
-    return res.json();
-}
-
-// withApiAuthRequired gives the handler the async storage context that
-// updateSession needs to write the session cookie in App Router.
+/**
+ * GET /auth/link-callback
+ *
+ * Runs after the secondary provider's OAuth flow completes.
+ * At this point the session belongs to the secondary account.
+ *
+ * The Auth0 Post Login Action already linked the identities in Auth0.
+ * It also set `linking_primary_sub` as an ID token custom claim on success.
+ *
+ * This handler:
+ *  1. Reads the primary sub from the ID token claim (or cookie fallback).
+ *  2. Fetches the primary user via Management API (M2M credentials).
+ *  3. Restores the session to the primary user.
+ *  4. Syncs the linked connection to MongoDB.
+ *  5. Redirects to returnTo (usually /settings).
+ */
 export const GET = auth0.withApiAuthRequired(async function linkCallback(
     req: Request
 ) {
@@ -37,23 +27,31 @@ export const GET = auth0.withApiAuthRequired(async function linkCallback(
     const returnTo = searchParams.get("returnTo") ?? "/settings";
     const appBaseUrl = process.env.APP_BASE_URL ?? "http://localhost:3000";
 
-    const primarySub = request.cookies.get("linking_primary_sub")?.value;
     const session = await auth0.getSession();
 
     const response = NextResponse.redirect(new URL(returnTo, appBaseUrl));
+    // Always clear the cookie regardless of outcome
     response.cookies.delete("linking_primary_sub");
 
     if (!session?.user) return response;
 
-    // Same account logged back in — nothing to merge
+    // Prefer the ID token claim set by the Auth0 Action (most reliable).
+    // Fall back to the httpOnly cookie set by /auth/connect.
+    const primarySub =
+        (session.user.linking_primary_sub as string | undefined) ||
+        request.cookies.get("linking_primary_sub")?.value;
+
+    // Nothing to restore — user logged in with their existing account
     if (!primarySub || primarySub === session.user.sub) return response;
 
-    try {
-        const primaryUser = await getPrimaryUser(primarySub);
+    // The current session sub is the secondary (just-authenticated) account
+    const secondarySub = session.user.sub;
 
-        // updateSession in v4 App Router only needs the session object —
-        // it reads/writes the cookie via the async storage set up by
-        // withApiAuthRequired.
+    try {
+        // Fetch the primary user profile (with updated identities after linking)
+        const primaryUser = await getAuth0User(primarySub);
+
+        // Restore the session to the primary user
         await auth0.updateSession({
             ...session,
             user: {
@@ -65,10 +63,13 @@ export const GET = auth0.withApiAuthRequired(async function linkCallback(
                 picture: primaryUser.picture,
                 email: primaryUser.email,
                 email_verified: primaryUser.email_verified,
-                org_id: primaryUser.org_id ?? undefined
-            }
+                org_id: primaryUser.org_id ?? undefined,
+                // Clear the linking claim from the restored session
+                linking_primary_sub: undefined,
+            },
         });
 
+        // Sync linked connection to MongoDB
         try {
             const { syncUserProfile } = await import("@/lib/user-sync");
             await syncUserProfile(
@@ -77,20 +78,21 @@ export const GET = auth0.withApiAuthRequired(async function linkCallback(
                     email: primaryUser.email,
                     name: primaryUser.name,
                     picture: primaryUser.picture,
-                    // email_verified: primaryUser.email_verified
+                    nickname: primaryUser.nickname,
                 },
                 {
                     connectedAccount: {
-                        provider: session.user.sub.split("|")[0],
-                        connection: session.user.sub.split("|")[0]
-                    }
+                        // e.g. "google-oauth2" from "google-oauth2|12345"
+                        provider: secondarySub.slice(0, secondarySub.indexOf("|")),
+                        connection: secondarySub.slice(0, secondarySub.indexOf("|")),
+                    },
                 }
             );
-        } catch (syncError) {
-            console.error("Profile sync failed after linking", syncError);
+        } catch (syncErr) {
+            console.error("MongoDB sync failed after linking:", syncErr);
         }
     } catch (err) {
-        console.error("Session restore failed after account linking", err);
+        console.error("Session restore failed after account linking:", err);
     }
 
     return response;

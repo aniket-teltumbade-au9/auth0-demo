@@ -85,7 +85,10 @@ export const auth0 = new Auth0Client({
                 picture: session.user.picture,
                 email: session.user.email,
                 email_verified: session.user.email_verified,
-                org_id: session.user.org_id
+                org_id: session.user.org_id,
+                // Preserve the custom claim set by the Auth0 Post Login Action.
+                // It signals that linking completed and identifies the primary user.
+                linking_primary_sub: session.user.linking_primary_sub ?? undefined
             }
         };
     },
@@ -100,23 +103,13 @@ export const auth0 = new Auth0Client({
             return NextResponse.redirect(url);
         }
 
-        if (session?.user) {
-            // Skip syncing during account linking — link-callback handles it
-            // after restoring the primary user's session.
-            const isLinkingCallback =
-                callbackContext.returnTo?.startsWith("/auth/link-callback") ?? false;
-
-            if (!isLinkingCallback) {
-                try {
-                    const { syncUserProfile } = await import("@/lib/user-sync");
-                    await syncUserProfile(session.user, {
-                        connectedAccount: callbackContext.connectedAccount ?? undefined
-                    });
-                } catch (syncError) {
-                    console.error("Profile sync failed during callback", syncError);
-                }
-            }
-        }
+        // NOTE: Do NOT import or call Mongoose/user-sync here.
+        // auth0.ts is imported by middleware.ts which runs in the Edge runtime.
+        // Webpack statically bundles ALL imports in this file (including dynamic
+        // ones) into the middleware chunk — Mongoose is Node.js-only and crashes.
+        // Profile syncing is handled in Node.js runtime contexts:
+        //   • app/settings/page.tsx  (Server Component)
+        //   • app/auth/link-callback/route.ts  (Route Handler)
 
         return NextResponse.redirect(
             new URL(callbackContext.returnTo ?? "/auth-demo", appBaseUrl)

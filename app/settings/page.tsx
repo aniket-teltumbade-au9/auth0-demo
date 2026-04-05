@@ -3,7 +3,8 @@ import { Database, Settings2 } from "lucide-react";
 import { ConnectedAccountsCard } from "@/components/settings/connected-accounts-card";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { auth0 } from "@/lib/auth0";
-import { getUserProfile } from "@/lib/user-sync";
+import { type Auth0Identity, getAuth0User } from "@/lib/management";
+import { getUserProfile, syncUserProfile } from "@/lib/user-sync";
 
 export default auth0.withPageAuthRequired(
     async function SettingsPage() {
@@ -13,12 +14,42 @@ export default auth0.withPageAuthRequired(
             return null;
         }
 
-        const profile = await getUserProfile(session.user.sub);
+        // Fetch Auth0 identities and MongoDB profile in parallel.
+        // Auth0 is the source of truth for linked providers; MongoDB holds profile edits.
+        const [auth0User, profile] = await Promise.allSettled([
+            getAuth0User(session.user.sub),
+            getUserProfile(session.user.sub),
+        ]);
+
+        const resolvedAuth0User =
+            auth0User.status === "fulfilled" ? auth0User.value : null;
+        const resolvedProfile =
+            profile.status === "fulfilled" ? profile.value : null;
+
+        // Derive the primary connection from the sub prefix (e.g. "google-oauth2")
         const primaryConnection =
-            profile?.primaryConnection || session.user.sub.split("|")[0] || "auth0";
+            resolvedProfile?.primaryConnection ||
+            session.user.sub.split("|")[0] ||
+            "auth0";
+
+        // Build the full provider set: Auth0 identities are canonical,
+        // MongoDB connectedConnections fill in if the Management API call failed.
+        const auth0Identities: Auth0Identity[] = resolvedAuth0User?.identities ?? [];
+        const auth0Connections = auth0Identities.map((id) => id.provider);
+        const mongoConnections = resolvedProfile?.connectedConnections ?? [];
+
         const mergedConnections = Array.from(
-            new Set([...(profile?.connectedConnections || []), primaryConnection])
+            new Set(
+                [...auth0Connections, ...mongoConnections, primaryConnection]
+                    .filter(Boolean)
+                    .map((c) => c.toLowerCase())
+            )
         );
+
+        // Sync MongoDB in the background so it stays up to date with Auth0.
+        syncUserProfile(session.user, {
+            connectedAccount: undefined,
+        }).catch((err) => console.error("Background MongoDB sync failed:", err));
 
         return (
             <section className="section-shell py-16 md:py-20">
@@ -34,15 +65,16 @@ export default auth0.withPageAuthRequired(
 
                 <div className="mt-12 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
                     <ProfileForm
-                        initialName={profile?.name || session.user.name || "Auth0 Demo User"}
-                        initialBio={profile?.bio || ""}
-                        email={profile?.email || session.user.email}
+                        initialName={resolvedProfile?.name || session.user.name || "Auth0 Demo User"}
+                        initialBio={resolvedProfile?.bio || ""}
+                        email={resolvedProfile?.email || session.user.email}
                     />
 
                     <div className="space-y-6">
                         <ConnectedAccountsCard
                             connections={mergedConnections}
                             primaryConnection={primaryConnection}
+                            identities={auth0Identities}
                         />
                         <div className="glass-panel p-6">
                             <div className="flex items-start gap-4">
@@ -65,7 +97,7 @@ export default auth0.withPageAuthRequired(
                                 <div>
                                     <h2 className="text-2xl font-semibold text-white">MongoDB sync</h2>
                                     <p className="mt-3 text-sm leading-7 text-slate-400">
-                                        Every successful callback silently upserts the user record. Current primary connection: <span className="font-medium text-white">{profile?.primaryConnection || session.user.sub.split("|")[0]}</span>.
+                                        Every successful callback silently upserts the user record. Current primary connection: <span className="font-medium text-white">{resolvedProfile?.primaryConnection || session.user.sub.split("|")[0]}</span>.
                                     </p>
                                 </div>
                             </div>
