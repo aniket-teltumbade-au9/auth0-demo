@@ -18,16 +18,16 @@ export function SiteHeader({ isAuthenticated, userName }: SiteHeaderProps) {
                     </div>
                     <div>
                         <p className="text-sm font-medium uppercase tracking-[0.28em] text-cyan-300">
-                            Auth0 Client Demo
+                            DevForge
                         </p>
-                        <p className="text-sm text-slate-400">Next.js + MongoDB showcase</p>
+                        <p className="text-sm text-slate-400">Full-stack Dev · NestJS · NextJS</p>
                     </div>
                 </div>
 
                 <nav className="hidden items-center gap-8 text-sm text-slate-300 lg:flex">
-                    <Link href="/">Overview</Link>
-                    <Link href="/auth-demo">Auth Demo</Link>
-                    <Link href="/settings">Settings</Link>
+                    <Link href="/">Home</Link>
+                    <Link href="/auth-demo">Live Demo</Link>
+                    <a href="/#integrations">Integrations</a>
                     <a href="/#pricing">Pricing</a>
                     <a href="/#faq">FAQ</a>
                 </nav>
@@ -53,7 +53,7 @@ export function SiteHeader({ isAuthenticated, userName }: SiteHeaderProps) {
                             href="/login"
                             className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
                         >
-                            Launch demo
+                            Hire Me
                             <ChevronRight className="h-4 w-4" />
                         </a>
                     )}

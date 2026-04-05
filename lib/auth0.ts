@@ -55,7 +55,7 @@ export const auth0 = new Auth0Client({
     appBaseUrl: configuredBaseUrl,
     useDPoP,
     enableConnectAccountEndpoint: false,
-    signInReturnToPath: "/auth-demo",
+    signInReturnToPath: "/settings",
     session: {
         rolling: true,
         absoluteDuration: 60 * 60 * 24 * 7,

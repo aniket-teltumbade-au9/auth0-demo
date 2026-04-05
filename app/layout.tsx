@@ -8,8 +8,8 @@ import { auth0 } from "@/lib/auth0";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "Auth0 Client Demo",
-    description: "High-fidelity Auth0 demo built with Next.js, TypeScript, Tailwind CSS, and MongoDB."
+    title: "DevForge · Full-stack Developer",
+    description: "Full-stack freelance developer specialising in NestJS, NextJS, Auth0, MongoDB, and AWS. $20/hr, available on Upwork and Freelancer."
 };
 
 export default async function RootLayout({

@@ -2,24 +2,34 @@ import { HelpCircle } from "lucide-react";
 
 const faqs = [
     {
-        question: "Does the demo use real Auth0 middleware and callbacks?",
+        question: "What is your hourly rate and how does billing work?",
         answer:
-            "Yes. The project is wired to the current Auth0 Next.js SDK, including middleware, the callback hook, and protected API routes."
+            "$20/hr, negotiable for long-term or high-volume engagements. Hourly work is billed weekly via Upwork or Freelancer. Fixed-price projects use milestone payments — typically 50% upfront and 50% on delivery."
     },
     {
-        question: "How is MongoDB used in the walkthrough?",
+        question: "Which frameworks and databases do you work with?",
         answer:
-            "Each successful login silently upserts the visitor into MongoDB, then the settings form reads and updates the same record for a realistic account profile experience."
+            "Backend: NestJS and Express.js. Frontend: Next.js (App Router). Databases: MongoDB (Mongoose) and MySQL. Deployment: Docker on AWS EC2, S3 for storage, and Vercel for frontend. CMS: Payload CMS."
     },
     {
-        question: "Can this show enterprise SSO without custom backend work?",
+        question: "Can you integrate Twilio, WhatsApp Business, or email providers?",
         answer:
-            "Yes. The UI includes an SSO dashboard section designed to explain federation across enterprise domains while Auth0 handles the real login orchestration."
+            "Yes. I've worked with Twilio for SMS and voice, SendGrid and Mailgun for transactional email, MSG91 for India-market OTPs, and the Meta WhatsApp Business API for chat notifications. Demo pages for each are in progress."
     },
     {
-        question: "What about account linking for Google and Facebook?",
+        question: "Do you handle AWS deployment and Docker setup?",
         answer:
-            "The settings page uses Auth0's connected accounts flow so the client can see how linked identities surface inside a polished account center."
+            "Yes. I containerise apps with Docker, deploy to AWS EC2, set up S3 for file storage, configure RDS or MongoDB Atlas, and build CI/CD pipelines. I also deploy Next.js and Payload CMS to Vercel or a custom VPS."
+    },
+    {
+        question: "Can you build real-time features like video calls or live chat?",
+        answer:
+            "Yes — I can integrate Agora SDK for real-time video, audio, and live streaming. Live messaging and presence can be added with Socket.io or Agora RTM. Demos are coming soon to this page."
+    },
+    {
+        question: "Is the Auth0 demo on this site production-quality code?",
+        answer:
+            "Yes. Session management, account linking via the Management API, MongoDB profile sync, and middleware-protected routes are all production-standard. The source is open for review during our scoping call."
     }
 ];
 
@@ -28,9 +38,9 @@ export function FAQSection() {
         <section id="faq" className="section-shell pb-24">
             <div className="max-w-3xl">
                 <p className="text-sm uppercase tracking-[0.28em] text-cyan-300">FAQ</p>
-                <h2 className="section-title">Answers for the client conversation</h2>
+                <h2 className="section-title">Common questions before we start</h2>
                 <p className="section-copy">
-                    This keeps the landing page complete while reinforcing the technical decisions behind the demo.
+                    Have a question not listed here? Reach out via Upwork or Freelancer and I'll respond within 24 hours.
                 </p>
             </div>
 
