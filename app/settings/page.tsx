@@ -84,7 +84,7 @@ export default auth0.withPageAuthRequired(
                                 <div>
                                     <h2 className="text-2xl font-semibold text-white">Demo implementation notes</h2>
                                     <p className="mt-3 text-sm leading-7 text-slate-400">
-                                        The profile form persists to MongoDB. Account linking uses Auth0's built-in connected accounts route and returns here after the provider consent flow.
+                                        The profile form persists to MongoDB. Account linking uses Auth0&apos;s built-in connected accounts route and returns here after the provider consent flow.
                                     </p>
                                 </div>
                             </div>

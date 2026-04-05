@@ -1,4 +1,4 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 import { auth0 } from "@/lib/auth0";
 import {
@@ -31,7 +31,7 @@ function validatePayload(payload: unknown) {
     };
 }
 
-export const GET = auth0.withApiAuthRequired(async function getProfile(req: Request) {
+export const GET = auth0.withApiAuthRequired(async function getProfile(_req: Request) {
     const session = await auth0.getSession();
 
     if (!session) {

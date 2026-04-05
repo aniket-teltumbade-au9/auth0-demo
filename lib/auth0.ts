@@ -92,6 +92,7 @@ export const auth0 = new Auth0Client({
             }
         };
     },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async onCallback(error, context, _session) {
         const callbackContext = context as CallbackContextWithConnectedAccount;
         const appBaseUrl =

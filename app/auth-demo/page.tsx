@@ -27,7 +27,7 @@ export default auth0.withPageAuthRequired(
                                 <p className="text-sm uppercase tracking-[0.28em] text-slate-500">Social buttons</p>
                                 <h2 className="mt-2 text-2xl font-semibold text-white">Google and Facebook</h2>
                                 <p className="mt-3 text-sm leading-7 text-slate-400">
-                                    Send users to Auth0's Universal Login with a specific connection so the client can see the branded social path.
+                                    Send users to Auth0&apos;s Universal Login with a specific connection so the client can see the branded social path.
                                 </p>
                             </div>
                             <div className="rounded-2xl bg-cyan-400/10 p-3 text-cyan-200">

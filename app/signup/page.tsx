@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ArrowRight, Loader2, Mail, ShieldCheck, User } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -95,7 +95,6 @@ function FieldWrapper({
 
 /* ─── Popup hook ──────────────────────────────────────────────────── */
 function useAuthPopup(returnTo: string) {
-    const router = useRouter();
     const [loading, setLoading] = useState<string | null>(null);
 
     const open = useCallback(
@@ -142,7 +141,7 @@ function useAuthPopup(returnTo: string) {
 
             window.addEventListener("message", onMessage);
         },
-        [router, returnTo]
+        [returnTo]
     );
 
     return { loading, open };
