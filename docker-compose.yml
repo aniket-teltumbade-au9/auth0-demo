@@ -1,0 +1,80 @@
+# docker-compose.yml
+#
+# Local development + production parity.
+#
+# Usage:
+#   Development (hot reload, no build):
+#     docker compose --profile dev up
+#
+#   Production build (mirroring real deployment):
+#     docker compose --profile prod up --build
+#
+# Secrets:
+#   Copy .env.local.example → .env.local and fill in values.
+#   docker-compose reads .env.local automatically for the app service.
+
+services:
+
+  # ── MongoDB (local only) ───────────────────────────────────────────────────
+  # Skip this if you use MongoDB Atlas — just set MONGODB_URI in .env.local.
+  mongo:
+    image: mongo:7
+    container_name: devforge_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: auth0-demo
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles: [dev, prod]
+
+  # ── Next.js dev server (hot reload) ───────────────────────────────────────
+  app-dev:
+    image: node:20-alpine
+    container_name: devforge_app_dev
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- -p 3000"
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source — edits reflect immediately
+      - .:/app
+      # Prevent host node_modules from shadowing container ones
+      - /app/node_modules
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      mongo:
+        condition: service_healthy
+    profiles: [dev]
+
+  # ── Next.js production build ───────────────────────────────────────────────
+  app-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+    container_name: devforge_app_prod
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      mongo:
+        condition: service_healthy
+    profiles: [prod]
+
+volumes:
+  mongo_data:
