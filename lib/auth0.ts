@@ -11,7 +11,6 @@ type CallbackContextWithConnectedAccount = {
 };
 
 const myAccountAudience = undefined;
-//  auth0Domain ? `https://${auth0Domain}/me/` : undefined;
 
 const useDPoP = Boolean(
     process.env.AUTH0_DPOP_PUBLIC_KEY && process.env.AUTH0_DPOP_PRIVATE_KEY
@@ -23,17 +22,12 @@ const primaryBaseUrl = Array.isArray(configuredBaseUrl)
     : configuredBaseUrl;
 
 function getConfiguredBaseUrl() {
-    const baseUrl = process.env.APP_BASE_URL ?? "http://localhost:3000"; // ← fallback
-
+    const baseUrl = process.env.APP_BASE_URL ?? "http://localhost:3000";
     const values = baseUrl
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean);
-
-    if (values.length <= 1) {
-        return values[0];
-    }
-
+    if (values.length <= 1) return values[0];
     return values;
 }
 
@@ -41,7 +35,6 @@ function getAuthErrorMessage(error: unknown) {
     if (!error || typeof error !== "object") {
         return "An error occurred during the authorization flow.";
     }
-
     const candidate = error as {
         message?: string;
         cause?: {
@@ -50,7 +43,6 @@ function getAuthErrorMessage(error: unknown) {
             error_description?: string;
         };
     };
-
     return (
         candidate.cause?.error_description ||
         candidate.cause?.message ||
@@ -75,14 +67,11 @@ export const auth0 = new Auth0Client({
     },
     authorizationParameters: myAccountAudience
         ? {
-            // Needed for connected account flows and My Account operations.
             audience: myAccountAudience,
-            scope:
-                "openid profile email offline_access create:me:connected_accounts identities:read identities:manage"
+            scope: "openid profile email offline_access create:me:connected_accounts identities:read identities:manage"
         }
         : {
-            scope:
-                "openid profile email offline_access create:me:connected_accounts identities:read identities:manage"
+            scope: "openid profile email offline_access create:me:connected_accounts identities:read identities:manage"
         },
     async beforeSessionSaved(session) {
         return {
@@ -112,16 +101,20 @@ export const auth0 = new Auth0Client({
         }
 
         if (session?.user) {
-            try {
-                // Dynamic import keeps Mongoose out of the Edge Runtime bundle;
-                // onCallback only runs in the Node.js /auth/callback route handler.
-                const { syncUserProfile } = await import("@/lib/user-sync");
-                await syncUserProfile(session.user, {
-                    connectedAccount: callbackContext.connectedAccount ?? undefined
-                });
-            } catch (syncError) {
-                // Never block login because of profile persistence failures.
-                console.error("Profile sync failed during callback", syncError);
+            // Skip syncing during account linking — link-callback handles it
+            // after restoring the primary user's session.
+            const isLinkingCallback =
+                callbackContext.returnTo?.startsWith("/auth/link-callback") ?? false;
+
+            if (!isLinkingCallback) {
+                try {
+                    const { syncUserProfile } = await import("@/lib/user-sync");
+                    await syncUserProfile(session.user, {
+                        connectedAccount: callbackContext.connectedAccount ?? undefined
+                    });
+                } catch (syncError) {
+                    console.error("Profile sync failed during callback", syncError);
+                }
             }
         }
 
